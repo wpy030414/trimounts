@@ -1,0 +1,45 @@
+name: Build Vue SPA
+
+on:
+  push:
+    branches: [main, master, prod]
+  pull_request:
+    branches: [main, master, prod]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build project
+        run: |
+          npm install -g pnpm
+          pnpm i
+          pnpm build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
